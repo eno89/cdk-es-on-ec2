@@ -2,9 +2,16 @@
   "name": "cdk-es-on-ec2",
   "version": "0.1.0",
   "bin": {
-    "cdk-es-on-ec2": "bin/cdk-es-on-ec2.js"
+    "cdk-es-on-ec2": "bin/main.js"
   },
   "scripts": {
+    "rain-clear": "rm -rf template && mkdir -p template",
+    "rain-fmt:main": "Stage='' StageOut='.' Stack=EsOnEc2Stack; cat ./cdk.out/${StageOut}/${Stage}${Stack}*.template.json | rain fmt > ./template/${Stage}${Stack}.yaml",
+    "check": "cdk list",
+    "postcheck": "npm run rain-clear && npm run rain-fmt:main",
+    "diff": "cdk diff '*'",
+    "hotswap": "cdk deploy --hotswap",
+    "deploy": "cdk deploy '*' --require-approval=never",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",

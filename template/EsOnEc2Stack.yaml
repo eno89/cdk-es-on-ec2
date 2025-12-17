@@ -1,0 +1,26 @@
+Parameters:
+  BootstrapVersion:
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+
+Rules:
+  CheckBootstrapVersion:
+    Assertions:
+      - Assert: !Not
+          - Fn::Contains:
+              - - "1"
+                - "2"
+                - "3"
+                - "4"
+                - "5"
+              - !Ref BootstrapVersion
+        AssertDescription: CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.
+
+Resources:
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Metadata:
+      aws:cdk:path: EsOnEc2Stack/CDKMetadata/Default
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/zPSMzI20jNUTCwv1k1OydbNyUzSCy5JTM7WyctPSdXLKtYvMzLRMzTUM1TMKs7M1C0qzSvJzE3VC4LQAH5Pf9s/AAAA
