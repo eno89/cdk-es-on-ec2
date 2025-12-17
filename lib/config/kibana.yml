@@ -1,0 +1,29 @@
+# =================== System: Kibana Server ===================
+server.port: 5601
+server.host: "0.0.0.0"
+#server.publicBaseUrl: "http://localhost:5601"
+
+# =================== System: Kibana Server (Optional) ===================
+# =================== System: Elasticsearch ===================
+elasticsearch.hosts: ["http://localhost:9200"]
+
+# =================== System: Elasticsearch (Optional) ===================
+
+# =================== System: Logging ===================
+logging:
+  appenders:
+    file:
+      type: file
+      fileName: /var/log/kibana/kibana.log
+      layout:
+        type: json
+  root:
+    appenders:
+      - default
+      - file
+
+# =================== System: Other ===================
+pid.file: /run/kibana/kibana.pid
+# =================== Frequently used (Optional)===================
+# =================== Saved Objects: Migrations ===================
+# =================== Search Autocomplete ===================
