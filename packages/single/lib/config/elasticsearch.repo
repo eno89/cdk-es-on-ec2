@@ -1,0 +1,25 @@
+[elasticsearch]
+name=Elasticsearch repository for 9.x packages
+baseurl=https://artifacts.elastic.co/packages/9.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+type=rpm-md
+
+[logstash-9.x]
+name=Elastic repository for 9.x packages
+baseurl=https://artifacts.elastic.co/packages/9.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+
+[kibana-9.X]
+name=Kibana repository for 9.x packages
+baseurl=https://artifacts.elastic.co/packages/9.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md

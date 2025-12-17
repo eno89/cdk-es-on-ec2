@@ -1,0 +1,23 @@
+site_name: Elasticsearch on EC2 (AWS CDK)
+site_description: >-
+  AWS CDKを使用して、
+
+repo_name: cdk-es-on-ec2
+repo_url: https://github.com/eno89/cdk-es-on-ec2-pri
+
+theme:
+  name: material
+  features:
+    - navigation.top
+    - navigation.tabs
+    - navigation.footer
+    - navigation.sections
+    - navigation.expand
+    - toc.integrate
+    - content.code.copy
+
+markdown_extensions:
+  - mdx_truly_sane_lists:
+      nested_indent: 2
+  - admonition
+  - pymdownx.magiclink

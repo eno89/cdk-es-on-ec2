@@ -10,3 +10,32 @@ cdk.out
 # CDK追加分
 cdk.context.json
 template/*.yaml
+packages/**/template/*.yaml
+
+# Secrets / local-only files
+#.env
+#.env.*
+.env.local
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+es-node
+es-node.pub
+
+# Build artifacts
+dist/
+packages/**/dist/
+
+# mkdocs
+site/
+
+# drawio
+*.bkp
+*.dtmp

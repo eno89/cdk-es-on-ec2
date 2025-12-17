@@ -1,0 +1,35 @@
+{
+  "name": "@cdk-es-on-ec2/single",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "single": "dist/bin/main.js"
+  },
+  "scripts": {
+    "rain-clear": "rm -rf template && mkdir -p template",
+    "rain-fmt:main": "Stage='' StageOut='.' Stack=Single; cat ./cdk.out/${StageOut}/${Stage}${Stack}*.template.json | rain fmt > ./template/${Stage}${Stack}.yaml",
+    "check": "cdk list",
+    "postcheck": "pnpm run rain-clear && pnpm run rain-fmt:main",
+    "diff": "cdk diff '*'",
+    "hotswap": "cdk deploy --hotswap",
+    "deploy": "cdk deploy '*' --require-approval=never",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "test:update": "jest --updateSnapshot",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^24.10.1",
+    "aws-cdk": "2.1034.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.232.1",
+    "constructs": "^10.0.0"
+  }
+}

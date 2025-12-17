@@ -1,13 +1,16 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { AppParam } from "../param/parameter";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as iam from "aws-cdk-lib/aws-iam";
-import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import * as elbv2tg from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
 import * as fs from "fs";
 
-export class EsOnEc2Stack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export interface EsSingleStackProps extends cdk.StackProps {
+  param: AppParam;
+}
+
+export class EsSingleStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: EsSingleStackProps) {
     super(scope, id, props);
 
     // ==== IP ====
@@ -16,11 +19,15 @@ export class EsOnEc2Stack extends cdk.Stack {
 
     // ==== VPC ====
     const vpc = new ec2.Vpc(this, `Vpc`, {
+      ipAddresses: ec2.IpAddresses.cidr("10.0.0.0/24"),
       maxAzs: 2,
-      natGateways: 1,
       subnetConfiguration: [
-        { name: "Public", subnetType: ec2.SubnetType.PUBLIC },
-        { name: "Private", subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+        {
+          // Public
+          name: "Public",
+          subnetType: ec2.SubnetType.PUBLIC,
+          cidrMask: 26,
+        },
       ],
     });
 
@@ -62,23 +69,25 @@ export class EsOnEc2Stack extends cdk.Stack {
     // ==== UserData ====
     const clusterTagKey = "Cluster";
     const clusterTagVal = "es9-cdk";
+    const nodeName = `es-node-1`;
 
     const repoText = fs.readFileSync("lib/config/elasticsearch.repo", "utf8");
     const settingEs = fs.readFileSync("lib/config/elasticsearch.yml", "utf8");
     const settingKibana = fs.readFileSync("lib/config/kibana.yml", "utf8");
 
-    const commonUserData = () => {
+    const commonUserData = (nodeName: string) => {
       const ud = ec2.UserData.forLinux();
       ud.addCommands(
         "set -eux",
+        `hostnamectl set-hostname ${nodeName}`,
         // ES 9
         "rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch",
         "cat << EOT > /etc/yum.repos.d/elasticsearch.repo",
         repoText,
         "EOT",
-        "yum install -y logstash",
         "yum install -y elasticsearch | tee elasticsearch.txt",
         "yum install -y kibana",
+        "yum install -y logstash",
         "cat << EOT > /etc/elasticsearch/elasticsearch.yml",
         settingEs,
         "EOT",
@@ -89,22 +98,22 @@ export class EsOnEc2Stack extends cdk.Stack {
         'echo "-Xms2g" >  /etc/elasticsearch/jvm.options.d/heap.options',
         'echo "-Xmx2g" >> /etc/elasticsearch/jvm.options.d/heap.options',
         "systemctl daemon-reload",
-        "systemctl enable logstash",
         "systemctl enable elasticsearch",
         "systemctl enable kibana",
-        "systemctl start logstash",
-        "systemctl status logstash",
+        "systemctl enable logstash",
         "systemctl start elasticsearch",
         "systemctl status elasticsearch",
         "systemctl start kibana",
         "systemctl status kibana",
+        "systemctl start logstash",
+        "systemctl status logstash",
         "curl http://localhost:5601"
       );
       return ud;
     };
     // console.info(commonUserData().render()); // 確認用
 
-    const node1Ud = commonUserData();
+    const node1Ud = commonUserData(nodeName);
 
     // ==== Instances ====
     const blockDevice: ec2.BlockDevice = {
@@ -114,6 +123,16 @@ export class EsOnEc2Stack extends cdk.Stack {
     const subnets = vpc.selectSubnets({
       subnetType: ec2.SubnetType.PUBLIC,
     }).subnets;
+
+    // EIP
+    const eip1 = new ec2.CfnEIP(this, `Eip1`, {
+      domain: "vpc",
+    });
+    new cdk.CfnOutput(this, `OutEip1`, {
+      value: eip1.eipRef.publicIp,
+    });
+
+    const keyPair = ec2.KeyPair.fromKeyPairName(this, `KeyPair`, `es-node`);
 
     const mkInstance = (id: string, index: number, ud: ec2.UserData) => {
       const inst = new ec2.Instance(this, id, {
@@ -127,7 +146,7 @@ export class EsOnEc2Stack extends cdk.Stack {
         role,
         userData: ud,
         blockDevices: [blockDevice],
-        keyPair: ec2.KeyPair.fromKeyPairName(this, `KeyPair`, `es-node`),
+        keyPair,
       });
       cdk.Tags.of(inst).add(clusterTagKey, clusterTagVal);
       cdk.Tags.of(inst).add("Name", `es-node-${index + 1}`);
@@ -137,14 +156,8 @@ export class EsOnEc2Stack extends cdk.Stack {
 
       return inst;
     };
-    // EIP
-    const eip1 = new ec2.CfnEIP(this, `Eip${id}`, {
-      domain: "vpc",
-    });
-    new cdk.CfnOutput(this, `OutEip${id}`, {
-      value: eip1.eipRef.publicIp,
-    });
 
+    // Instance
     const es1 = mkInstance("EsNode1", 0, node1Ud);
     eip1.instanceId = es1.instanceId;
   }

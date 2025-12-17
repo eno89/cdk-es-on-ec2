@@ -1,34 +1,21 @@
 {
   "name": "cdk-es-on-ec2",
-  "version": "0.1.0",
-  "bin": {
-    "cdk-es-on-ec2": "bin/main.js"
-  },
+  "private": true,
+  "packageManager": "pnpm@10.25.0",
   "scripts": {
-    "rain-clear": "rm -rf template && mkdir -p template",
-    "rain-fmt:main": "Stage='' StageOut='.' Stack=EsOnEc2Stack; cat ./cdk.out/${StageOut}/${Stage}${Stack}*.template.json | rain fmt > ./template/${Stage}${Stack}.yaml",
-    "check": "cdk list",
-    "postcheck": "npm run rain-clear && npm run rain-fmt:main",
-    "diff": "cdk diff '*'",
-    "hotswap": "cdk deploy --hotswap",
-    "deploy": "cdk deploy '*' --require-approval=never",
-    "build": "tsc",
-    "watch": "tsc -w",
-    "test": "jest",
-    "test:update": "jest --updateSnapshot",
-    "cdk": "cdk"
-  },
-  "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "^24.10.1",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.5",
-    "aws-cdk": "2.1034.0",
-    "ts-node": "^10.9.2",
-    "typescript": "~5.9.3"
-  },
-  "dependencies": {
-    "aws-cdk-lib": "2.232.1",
-    "constructs": "^10.0.0"
+    "build": "pnpm -r --filter \"./packages/**\" build",
+    "watch": "pnpm -r --filter \"./packages/**\" watch",
+    "test": "pnpm -r --filter \"./packages/**\" test",
+    "test:update": "pnpm -r --filter \"./packages/**\" test:update",
+    "check": "pnpm -r --filter \"./packages/**\" check",
+    "diff": "pnpm -r --filter \"./packages/**\" diff",
+    "deploy": "pnpm -r --filter \"./packages/**\" deploy",
+    "multi:check": "pnpm -C packages/multi run check",
+    "multi:diff": "pnpm -C packages/multi run diff",
+    "multi:deploy": "pnpm -C packages/multi run deploy",
+    "multi:apply": "pnpm -C packages/multi run apply",
+    "single:check": "pnpm -C packages/single run check",
+    "single:diff": "pnpm -C packages/single run diff",
+    "single:deploy": "pnpm -C packages/single run deploy"
   }
 }

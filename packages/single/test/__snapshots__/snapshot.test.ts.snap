@@ -2,8 +2,9 @@
 
 exports[`Snapshot Test 1`] = `
 {
+  "Description": "Single ES",
   "Outputs": {
-    "OutEipEsOnEc2Stack": {
+    "OutEip1": {
       "Value": {
         "Fn::Select": [
           0,
@@ -11,7 +12,7 @@ exports[`Snapshot Test 1`] = `
             "Fn::Split": [
               "|",
               {
-                "Ref": "EipEsOnEc2Stack",
+                "Ref": "Eip1",
               },
             ],
           },
@@ -36,7 +37,7 @@ exports[`Snapshot Test 1`] = `
     },
   },
   "Resources": {
-    "EipEsOnEc2Stack": {
+    "Eip1": {
       "Properties": {
         "Domain": "vpc",
         "InstanceId": {
@@ -162,6 +163,7 @@ exports[`Snapshot Test 1`] = `
         "UserData": {
           "Fn::Base64": "#!/bin/bash
 set -eux
+hostnamectl set-hostname es-node-1
 rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 cat << EOT > /etc/yum.repos.d/elasticsearch.repo
 [elasticsearch]
@@ -190,9 +192,9 @@ enabled=1
 autorefresh=1
 type=rpm-md
 EOT
-yum install -y logstash
 yum install -y elasticsearch | tee elasticsearch.txt
 yum install -y kibana
+yum install -y logstash
 cat << EOT > /etc/elasticsearch/elasticsearch.yml
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
@@ -252,15 +254,15 @@ mkdir -p /etc/elasticsearch/jvm.options.d
 echo "-Xms2g" >  /etc/elasticsearch/jvm.options.d/heap.options
 echo "-Xmx2g" >> /etc/elasticsearch/jvm.options.d/heap.options
 systemctl daemon-reload
-systemctl enable logstash
 systemctl enable elasticsearch
 systemctl enable kibana
-systemctl start logstash
-systemctl status logstash
+systemctl enable logstash
 systemctl start elasticsearch
 systemctl status elasticsearch
 systemctl start kibana
 systemctl status kibana
+systemctl start logstash
+systemctl status logstash
 curl http://localhost:5601",
         },
       },
@@ -288,14 +290,14 @@ curl http://localhost:5601",
         ],
         "SecurityGroupIngress": [
           {
-            "CidrIp": "127.0.0.1/32",
+            "CidrIp": "172.0.0.1/32",
             "Description": "SSH",
             "FromPort": 22,
             "IpProtocol": "tcp",
             "ToPort": 22,
           },
           {
-            "CidrIp": "127.0.0.1/32",
+            "CidrIp": "172.0.0.1/32",
             "Description": "Kibana",
             "FromPort": 5601,
             "IpProtocol": "tcp",
@@ -308,7 +310,7 @@ curl http://localhost:5601",
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "EsSgfromEsOnEc2StackEsSgDAB2BA0D5044CF13234F": {
+    "EsSgfromSingleEsSg4A8BE11950445B44474B": {
       "Properties": {
         "Description": "Logstash beats",
         "FromPort": 5044,
@@ -329,7 +331,7 @@ curl http://localhost:5601",
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
-    "EsSgfromEsOnEc2StackEsSgDAB2BA0D5601616485BE": {
+    "EsSgfromSingleEsSg4A8BE1195601E74879C7": {
       "Properties": {
         "Description": "Kibana",
         "FromPort": 5601,
@@ -350,7 +352,7 @@ curl http://localhost:5601",
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
-    "EsSgfromEsOnEc2StackEsSgDAB2BA0D9200F4FC6840": {
+    "EsSgfromSingleEsSg4A8BE119920023B6A8B9": {
       "Properties": {
         "Description": "ES REST",
         "FromPort": 9200,
@@ -371,7 +373,7 @@ curl http://localhost:5601",
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
-    "EsSgfromEsOnEc2StackEsSgDAB2BA0D93007F7F01E1": {
+    "EsSgfromSingleEsSg4A8BE11993005D940574": {
       "Properties": {
         "Description": "ES inter-node",
         "FromPort": 9300,
@@ -394,14 +396,14 @@ curl http://localhost:5601",
     },
     "Vpc8378EB38": {
       "Properties": {
-        "CidrBlock": "10.0.0.0/16",
+        "CidrBlock": "10.0.0.0/24",
         "EnableDnsHostnames": true,
         "EnableDnsSupport": true,
         "InstanceTenancy": "default",
         "Tags": [
           {
             "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc",
+            "Value": "Single/Vpc",
           },
         ],
       },
@@ -412,149 +414,11 @@ curl http://localhost:5601",
         "Tags": [
           {
             "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc",
+            "Value": "Single/Vpc",
           },
         ],
       },
       "Type": "AWS::EC2::InternetGateway",
-    },
-    "VpcPrivateSubnet1DefaultRouteBE02A9ED": {
-      "Properties": {
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "NatGatewayId": {
-          "Ref": "VpcPublicSubnet1NATGateway4D7517AA",
-        },
-        "RouteTableId": {
-          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
-        },
-      },
-      "Type": "AWS::EC2::Route",
-    },
-    "VpcPrivateSubnet1RouteTableAssociation70C59FA6": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
-        },
-        "SubnetId": {
-          "Ref": "VpcPrivateSubnet1Subnet536B997A",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "VpcPrivateSubnet1RouteTableB2C5B500": {
-      "Properties": {
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PrivateSubnet1",
-          },
-        ],
-        "VpcId": {
-          "Ref": "Vpc8378EB38",
-        },
-      },
-      "Type": "AWS::EC2::RouteTable",
-    },
-    "VpcPrivateSubnet1Subnet536B997A": {
-      "Properties": {
-        "AvailabilityZone": {
-          "Fn::Select": [
-            0,
-            {
-              "Fn::GetAZs": "",
-            },
-          ],
-        },
-        "CidrBlock": "10.0.128.0/18",
-        "MapPublicIpOnLaunch": false,
-        "Tags": [
-          {
-            "Key": "aws-cdk:subnet-name",
-            "Value": "Private",
-          },
-          {
-            "Key": "aws-cdk:subnet-type",
-            "Value": "Private",
-          },
-          {
-            "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PrivateSubnet1",
-          },
-        ],
-        "VpcId": {
-          "Ref": "Vpc8378EB38",
-        },
-      },
-      "Type": "AWS::EC2::Subnet",
-    },
-    "VpcPrivateSubnet2DefaultRoute060D2087": {
-      "Properties": {
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "NatGatewayId": {
-          "Ref": "VpcPublicSubnet1NATGateway4D7517AA",
-        },
-        "RouteTableId": {
-          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
-        },
-      },
-      "Type": "AWS::EC2::Route",
-    },
-    "VpcPrivateSubnet2RouteTableA678073B": {
-      "Properties": {
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PrivateSubnet2",
-          },
-        ],
-        "VpcId": {
-          "Ref": "Vpc8378EB38",
-        },
-      },
-      "Type": "AWS::EC2::RouteTable",
-    },
-    "VpcPrivateSubnet2RouteTableAssociationA89CAD56": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
-        },
-        "SubnetId": {
-          "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "VpcPrivateSubnet2Subnet3788AAA1": {
-      "Properties": {
-        "AvailabilityZone": {
-          "Fn::Select": [
-            1,
-            {
-              "Fn::GetAZs": "",
-            },
-          ],
-        },
-        "CidrBlock": "10.0.192.0/18",
-        "MapPublicIpOnLaunch": false,
-        "Tags": [
-          {
-            "Key": "aws-cdk:subnet-name",
-            "Value": "Private",
-          },
-          {
-            "Key": "aws-cdk:subnet-type",
-            "Value": "Private",
-          },
-          {
-            "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PrivateSubnet2",
-          },
-        ],
-        "VpcId": {
-          "Ref": "Vpc8378EB38",
-        },
-      },
-      "Type": "AWS::EC2::Subnet",
     },
     "VpcPublicSubnet1DefaultRoute3DA9E72A": {
       "DependsOn": [
@@ -571,48 +435,12 @@ curl http://localhost:5601",
       },
       "Type": "AWS::EC2::Route",
     },
-    "VpcPublicSubnet1EIPD7E02669": {
-      "Properties": {
-        "Domain": "vpc",
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PublicSubnet1",
-          },
-        ],
-      },
-      "Type": "AWS::EC2::EIP",
-    },
-    "VpcPublicSubnet1NATGateway4D7517AA": {
-      "DependsOn": [
-        "VpcPublicSubnet1DefaultRoute3DA9E72A",
-        "VpcPublicSubnet1RouteTableAssociation97140677",
-      ],
-      "Properties": {
-        "AllocationId": {
-          "Fn::GetAtt": [
-            "VpcPublicSubnet1EIPD7E02669",
-            "AllocationId",
-          ],
-        },
-        "SubnetId": {
-          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PublicSubnet1",
-          },
-        ],
-      },
-      "Type": "AWS::EC2::NatGateway",
-    },
     "VpcPublicSubnet1RouteTable6C95E38E": {
       "Properties": {
         "Tags": [
           {
             "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PublicSubnet1",
+            "Value": "Single/Vpc/PublicSubnet1",
           },
         ],
         "VpcId": {
@@ -642,7 +470,7 @@ curl http://localhost:5601",
             },
           ],
         },
-        "CidrBlock": "10.0.0.0/18",
+        "CidrBlock": "10.0.0.0/26",
         "MapPublicIpOnLaunch": true,
         "Tags": [
           {
@@ -655,7 +483,7 @@ curl http://localhost:5601",
           },
           {
             "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PublicSubnet1",
+            "Value": "Single/Vpc/PublicSubnet1",
           },
         ],
         "VpcId": {
@@ -684,7 +512,7 @@ curl http://localhost:5601",
         "Tags": [
           {
             "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PublicSubnet2",
+            "Value": "Single/Vpc/PublicSubnet2",
           },
         ],
         "VpcId": {
@@ -714,7 +542,7 @@ curl http://localhost:5601",
             },
           ],
         },
-        "CidrBlock": "10.0.64.0/18",
+        "CidrBlock": "10.0.0.64/26",
         "MapPublicIpOnLaunch": true,
         "Tags": [
           {
@@ -727,7 +555,7 @@ curl http://localhost:5601",
           },
           {
             "Key": "Name",
-            "Value": "EsOnEc2Stack/Vpc/PublicSubnet2",
+            "Value": "Single/Vpc/PublicSubnet2",
           },
         ],
         "VpcId": {

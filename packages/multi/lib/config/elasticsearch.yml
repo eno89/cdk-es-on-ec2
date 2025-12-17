@@ -1,0 +1,17 @@
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+cluster.name: es9-cdk
+
+# 3ノード構成 (EC2 discovery)
+discovery.seed_providers: ec2
+discovery.ec2.tag.Cluster: es9-cdk
+
+# 初回クラスタブートストラップ用
+cluster.initial_master_nodes: ["es-node-1", "es-node-2", "es-node-3"]
+
+http.host: 0.0.0.0
+xpack.ml.enabled: false
+
+# サンプル用途のため security は無効化（有効化する場合は証明書/CAの配布設計が必要）
+xpack.security.enabled: false

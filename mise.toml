@@ -1,5 +1,80 @@
 [tools]
+direnv = "2.37.1"
 "github:aws-cloudformation/rain" = "1.24.1"
 node = "24.11.1"
 pnpm = "10.25.0"
 python = "3.14.0"
+
+# ======== Task ========
+
+# ==== AWS CLI ====
+[tasks.mkdocs-open]
+description = ""
+alias = ["open"]
+run = '''
+cd mkdocs && mkdocs serve -o -a 127.0.0.1:8800 --livereload
+'''
+
+[tasks.mkdocs-build]
+description = ""
+run = '''
+cd mkdocs && mkdocs build
+# mkdocs gh-deploy
+'''
+
+# ==== AWS CLI ====
+[tasks.list-cfn-resources]
+description = ""
+alias = ["cfn"]
+usage = 'arg <stack_name>'
+run = '''
+echo "STACK: ${usage_stack_name}"
+stack_name=${usage_stack_name?}
+aws cloudformation list-stack-resources --stack-name=${stack_name} --query='*[].[ LogicalResourceId, ResourceType, PhysicalResourceId, ResourceStatus ]' --output=text |
+  awk 'BEGIN { print "LogicalResourceId", "ResourceType", "PhysicalResourceId", "ResourceStatus" } { print $0 }' |
+  column -t
+'''
+
+[tasks.find-stack]
+description = "Find StackName from Physical Resource Id ex: vpc-0797ec856afc1c1d8"
+usage = 'arg <physical_id>'
+run = '''
+physical_id=${usage_physical_id?}
+aws cloudformation describe-stack-resources --physical-resource-id=${physical_id} --query='*[0].StackName' --output=text
+'''
+
+# ==== SSH / SSM ====
+[tasks.ssh]
+description = "ssh"
+usage = 'arg <public_ip>'
+run = '''
+ip=${usage_public_ip?}
+ssh -i ~/.ssh/es-node ec2-user@${ip}
+'''
+
+[tasks.start-session]
+description = "ssm"
+alias = ["ss"]
+usage = 'arg <instance_id>'
+run = '''
+id=${usage_instance_id?}
+aws ssm start-session --target=${id}
+'''
+
+# ==== direnv ====
+[tasks.update-env-local]
+description = "update .env.local from CFn Stack"
+alias = ["ul", "uo"]
+run = '''
+#!/bin/bash
+OUT_FILE=dotenv/.env.local
+cat /dev/null > ${OUT_FILE}
+echo ${STACKS} | tr ' ' '\n' | while read -r STACK; do
+  echo "# ${STACK}" | tee -a ${OUT_FILE}
+  text=$(aws cloudformation describe-stacks --stack-name=${STACK} --query='*[0].Outputs[].[OutputKey, OutputValue]' --output=text)
+  if [[ ${text} != "None" ]]; then
+    echo -ne "${text}" | awk '{ print $1, "=", $2 }' | sort
+    echo -ne "${text}" | grep -v ':' | awk '{ print $1, "=", $2 }' | sort >> ${OUT_FILE}
+  fi
+done
+'''
